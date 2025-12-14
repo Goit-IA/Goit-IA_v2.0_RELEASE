@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Goit-IA{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/isotipo-oscuro.svg') }}" media="(prefers-color-scheme: light)">
     <link rel="icon" href="{{ url_for('static', filename='images/isotipo-claro.svg') }}" media="(prefers-color-scheme: dark)">
     <link rel="icon" href="{{ url_for('static', filename='images/isotipo-oscuro.svg') }}">
@@ -69,6 +69,6 @@
         <p>&copy; 2025 Goit-IA. Todos los derechos reservados.</p>
     </footer>
 
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

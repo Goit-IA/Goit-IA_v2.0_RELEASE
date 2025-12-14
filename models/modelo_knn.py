@@ -49,7 +49,7 @@ def inicializar_knn():
 
         # 3. Construye la ruta completa a 'faq.csv'
         #    (Asumiendo que tu estructura es: mi-chatbot-flask/database/faq.csv)
-        ruta_faq = os.path.join(root_dir, 'modelo', 'faq.csv')
+        ruta_faq = os.path.join(root_dir, 'data', 'faq.csv')
         
         print(f"DEBUG (KNN): Intentando cargar 'faq.csv' desde: {ruta_faq}")
 

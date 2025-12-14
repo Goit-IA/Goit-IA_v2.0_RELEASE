@@ -1,11 +1,11 @@
 from flask import Flask
 
 # Importar los Blueprints
-from app_inicio import inicio_bp
-from app_chatbot import chatbot_bp
-from app_informacion import informacion_bp
-from app_acercade import acercade_bp
-from app_privacidad import privacidad_bp
+from routes.app_inicio import inicio_bp
+from routes.app_chatbot import chatbot_bp
+from routes.app_informacion import informacion_bp
+from routes.app_acercade import acercade_bp
+from routes.app_privacidad import privacidad_bp
 
 # Crear la instancia de la aplicación Flask
 app = Flask(__name__)
