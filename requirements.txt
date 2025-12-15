@@ -12,3 +12,4 @@ nltk
 scikit-learn
 tqdm
 langchain-groq
+python-dotenv

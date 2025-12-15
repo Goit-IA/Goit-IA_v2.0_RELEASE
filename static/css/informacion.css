@@ -1,0 +1,21 @@
+/* static/css/informacion.css */
+/* Nota: .section-header está en base.css */
+
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: var(--secondary-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover { transform: translateY(-5px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05); }
+.card-icon { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); }
+.card h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+.card p { color: var(--text-secondary); }

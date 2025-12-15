@@ -1,0 +1,29 @@
+/* static/css/acerca_de.css */
+
+#about-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 3rem;
+    margin-top: 2rem;
+}
+
+.about-image {
+    background: var(--secondary-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: var(--primary-color);
+}
+
+.about-content h2 { font-size: 2.5rem; font-weight: 600; margin-bottom: 1rem; }
+.about-content p { color: var(--text-secondary); margin-bottom: 1rem; }
+
+@media (max-width: 768px) {
+    #about-section { grid-template-columns: 1fr; }
+    .about-content h2 { font-size: 2rem; }
+}

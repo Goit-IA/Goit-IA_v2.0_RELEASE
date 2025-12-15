@@ -2,6 +2,10 @@
 
 {% block title %}Acerca de | Goit-IA{% endblock %}
 
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/acerca_de.css') }}">
+{% endblock %}
+
 {% block content %}
 <section id="about-section">
     <div class="about-content">

@@ -2,6 +2,10 @@
 
 {% block title %}Chat | Goit-IA{% endblock %}
 
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+{% endblock %}
+
 {% block content %}
 <div id="chat-container">
     <div class="chat-header">
@@ -10,17 +14,25 @@
     
     <div class="chat-messages" id="chat-messages-container">
         <div class="message bot">
-            ¡Hola! Soy Goit-IA, tu asistente académico de la FNT. ¿En qué puedo ayudarte hoy?
+            ¡Hola! Soy Goit-IA. Pregúntame lo que necesites sobre la FNT.
         </div>
     </div>
     
+    <div class="loading-face" id="loading-face">
+        (•‿•) <br><span style="font-size: 1rem;">Pensando...</span>
+    </div>
+
+    <div class="regenerate-container">
+        <button id="btn-regenerate" class="regenerate-btn">
+            🔄 Regenerar última respuesta
+        </button>
+    </div>
+    
     <form class="chat-input" id="chat-form">
-        <input type="text" id="chat-input-field" placeholder="Escribe tu mensaje aquí..." required>
+        <input type="text" id="chat-input-field" placeholder="Escribe tu mensaje aquí..." required autocomplete="off">
         <button type="submit">Enviar</button>
-        
-        <div class="loading-bar-container" id="loading-bar-container">
-            <div class="loading-bar" id="loading-bar"></div>
-        </div>
-        </form>
+    </form>
 </div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 {% endblock %}
