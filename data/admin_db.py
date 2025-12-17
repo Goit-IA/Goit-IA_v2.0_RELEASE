@@ -1,118 +1,99 @@
-# --- admin_db.py ---
 import os
 import shutil
-import requests
-from bs4 import BeautifulSoup
+import time
+import gc
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
+from langchain_community.document_loaders import WebBaseLoader, PyPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 
 # --- CONFIGURACIÓN ---
-CHROMA_PATH = "chroma_db_web"  # Carpeta donde se guardará la BD
-MODELO_EMBEDDING = "nomic-embed-text" # Debe estar instalado en Ollama
+CHROMA_PATH = "data/chroma_db_web"
+MODELO_EMBEDDING = "nomic-embed-text"
 
-URLS_A_ESCANEAR = [
-    "https://www.uv.mx/estudiantes/tramites-escolares/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/tramites-escolares-total/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/inscripcion-academico-administrativa/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/credencial-estudiante-fisica/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/credencial-estudiante-digital/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/seguro-facultativo/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/examen-de-salud-integral-esi/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/cambio-programa-educativo/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/reinscripcion-inscripcion-en-linea-il/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/declaracion-de-equivalencia-o-revalidacion-de-estudios/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/baja-temporal-por-periodo-escolar/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/baja-temporal-por-experiencia-educativa/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/baja-temporal-extemporanea/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/baja-definitiva/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/cambio-tutor-academico/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/traslado-escolar/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/dictamen-para-la-acreditacion-del-idioma-ingles-o-acreditacion-de-la-lengua/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/transferencia-de-calificacion-de-ee-a-otro-programa-educativo/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/equivalencia-y-o-transferencia-de-calificacion-de-lengua-i-ii-o-ingles-i-ii-al-mismo-programa-educativo-que-cursa-el-alumno/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/reconocimiento-de-creditos-por-ee-acreditadas-en-programas-educativos-cursados-previamente/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/transferencia-de-creditos-para-el-afel-a-traves-de-las-ee-de-centros-de-idiomas/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/movilidad-estudiantil-institucional/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/movilidad-estudiantil-nacional/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/movilidad-estudiantil-internacional/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/cumplimiento-de-servicio-social/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/acreditacion-de-la-experiencia-recepcional/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/certificado-de-estudios-completo-o-incompleto/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/legalizacion-de-certificados-de-estudio/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/expedicion-de-titulo-diploma-y-grado-academico/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/cedula-profesional/",
-    "http://subsegob.veracruz.gob.mx/documentos.php",
-    "https://www.uv.mx/estudiantes/tramites-escolares/registro-de-inicio-y-liberacion-del-servicio-social/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/autorizacion-de-examen-profesional-o-exencion/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/expedicion-de-carta-de-pasante/",
-    "https://www.uv.mx/estudiantes/tramites-escolares/autorizacion-de-examen-de-grado/",
-    "https://www.uv.mx/dgrf/files/2025/02/Tabulador-de-Cuotas-por-Serv.-Acad.-y-Admvos.-UV-febrero-2025.pdf",
-    "https://www.uv.mx/dgae/circulares/",
-    "https://www.uv.mx/secretariaacademica/cuotas-del-comite-pro-mejoras/",
-    "https://www.uv.mx/legislacion/files/2023/01/RComite%CC%81sProMejoras2023.pdf",
-    "https://www.uv.mx/transparencia/ot875/comite-pro-mejoras/",
-    "https://www.uv.mx/orizaba/negocios/informes-de-situacion-financiera/",
-    "https://www.uv.mx/secretariaacademica/files/2024/09/CIRCULAR-005-2023.pdf",
-    "https://www.uv.mx/secretariaacademica/files/2024/11/lineamientos-cuotas-2025.pdf"
-]
-
-def raspar_webs():
-    print("🕷️  Iniciando Web Scraping...")
-    docs = []
-    for url in URLS_A_ESCANEAR:
+def actualizar_base_datos_completa(registry_data):
+    """
+    Recibe el diccionario del registry.json con 'urls' y 'pdfs'.
+    Estrategia: Cargar documentos -> Conectar a DB -> Borrar datos viejos -> Insertar nuevos.
+    """
+    print("🚀 Iniciando proceso de entrenamiento con PDFs y URLs...")
+    
+    # 1. Preparar Documentos para RAG (URLs + PDFs)
+    todos_los_documentos = []
+    
+    # A) Procesar URLs
+    urls = [item['url'] for item in registry_data.get('urls', [])]
+    if urls:
+        print(f"📡 Descargando {len(urls)} URLs...")
         try:
-            if url.lower().endswith('.pdf'): continue
-            
-            resp = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
-            if resp.status_code != 200: continue
-
-            soup = BeautifulSoup(resp.content, 'html.parser')
-            for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
-                tag.decompose()
-            
-            texto = soup.get_text(separator=' ', strip=True)
-            if texto:
-                docs.append(Document(page_content=texto, metadata={"source": url}))
-                print(f"   ✔ Procesado: {url}")
+            loader_web = WebBaseLoader(urls)
+            docs_web = loader_web.load()
+            todos_los_documentos.extend(docs_web)
         except Exception as e:
-            print(f"   ❌ Error {url}: {e}")
-    return docs
+            print(f"⚠️ Error cargando URLs: {e}")
 
-def crear_base_datos():
-    # 1. Limpiar BD anterior si existe (para empezar de cero y evitar duplicados)
-    if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
-        print("🗑️  Base de datos anterior eliminada.")
+    # B) Procesar PDFs
+    pdfs = registry_data.get('pdfs', [])
+    for pdf_item in pdfs:
+        path = pdf_item.get('path')
+        if os.path.exists(path):
+            print(f"📄 Procesando PDF: {pdf_item['filename']}")
+            try:
+                loader_pdf = PyPDFLoader(path)
+                docs_pdf = loader_pdf.load()
+                todos_los_documentos.extend(docs_pdf)
+            except Exception as e:
+                print(f"⚠️ Error leyendo PDF {path}: {e}")
+        else:
+            print(f"⚠️ Archivo no encontrado: {path}")
 
-    # 2. Obtener documentos
-    documentos = raspar_webs()
-    if not documentos:
-        print("⚠️ No se encontraron documentos. Revisa las URLs.")
-        return
+    # 2. Actualizar ChromaDB (Sin borrar la carpeta)
+    if todos_los_documentos:
+        print("🔪 Dividiendo texto en fragmentos...")
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        chunks = text_splitter.split_documents(todos_los_documentos)
+        print(f"📊 Se generaron {len(chunks)} fragmentos de texto.")
 
-    # 3. Dividir en fragmentos (Chunks)
-    print("🔪 Dividiendo texto en fragmentos...")
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-    fragmentos = text_splitter.split_documents(documentos)
-    print(f"   -> Se generaron {len(fragmentos)} fragmentos.")
-
-    # 4. Crear y Guardar ChromaDB
-    print("💾 Generando Embeddings y guardando en disco (esto tarda un poco)...")
-    try:
-        Chroma.from_documents(
-            documents=fragmentos,
-            embedding=OllamaEmbeddings(model=MODELO_EMBEDDING),
-            persist_directory=CHROMA_PATH
+        print("🔄 Actualizando base de datos vectorial...")
+        
+        # Inicializamos el modelo de embeddings
+        embedding_function = OllamaEmbeddings(model=MODELO_EMBEDDING)
+        
+        # Conectamos a la DB existente (o se crea si no existe)
+        vector_db = Chroma(
+            persist_directory=CHROMA_PATH,
+            embedding_function=embedding_function
         )
-        print(f"✅ ¡ÉXITO! Base de datos guardada en la carpeta: '{CHROMA_PATH}'")
-    except Exception as e:
-        print(f"❌ Error al conectar con Ollama: {e}")
-        print("Asegúrate de ejecutar 'ollama serve' y 'ollama pull nomic-embed-text'")
+        
+        # PASO CLAVE: Borrar contenido previo sin borrar carpeta
+        try:
+            # Obtenemos todos los IDs actuales en la base de datos
+            existing_ids = vector_db.get()['ids']
+            if existing_ids:
+                print(f"🧹 Eliminando {len(existing_ids)} registros antiguos...")
+                # Borramos en lotes para evitar sobrecarga si son muchos
+                batch_size = 5000
+                for i in range(0, len(existing_ids), batch_size):
+                    vector_db.delete(existing_ids[i:i+batch_size])
+        except Exception as e:
+            print(f"⚠️ Advertencia al limpiar registros (puede ser base nueva): {e}")
 
-if __name__ == "__main__":
-    crear_base_datos()
+        # Insertamos los nuevos fragmentos
+        print("💾 Guardando nueva información...")
+        vector_db.add_documents(documents=chunks)
+        
+        print("✅ ChromaDB actualizada con éxito (URLs + PDFs).")
+    else:
+        print("⚠️ No hay documentos válidos (ni URLs ni PDFs) para entrenar.")
+        # Opcional: Si no hay documentos, podrías querer vaciar la DB también
+        try:
+             embedding_function = OllamaEmbeddings(model=MODELO_EMBEDDING)
+             vector_db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
+             existing_ids = vector_db.get()['ids']
+             if existing_ids:
+                 vector_db.delete(existing_ids)
+                 print("🧹 Base de datos vaciada (no hay documentos origen).")
+        except:
+            pass
+
+    return True

@@ -23,6 +23,9 @@ from models import modelo_llm
 modelo_llm.CHROMA_PATH = data_dir_chroma
 from logic.seleccion_modelo import SelectorDeModelo
 
+# --- NUEVO IMPORT PARA EL REGISTRO DE ACCESOS ---
+from logic.access_tracker import registrar_acceso
+
 # Inicialización
 selector = None
 try:
@@ -194,3 +197,29 @@ def api_chat():
         "reply": respuesta_limpia,
         "model": fuente
     })
+
+# --- NUEVA RUTA: REGISTRO DE ACCESOS ---
+
+@chatbot_bp.route('/api/register_access', methods=['POST'])
+def register_access():
+    data = request.json
+    programa = data.get('programa')
+    
+    if not programa:
+        return jsonify({"status": "error", "message": "Programa no seleccionado"}), 400
+
+    # Obtener IP (Manejo de Proxy si existe, sino remote_addr)
+    if request.headers.getlist("X-Forwarded-For"):
+        user_ip = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        user_ip = request.remote_addr
+        
+    user_agent = request.headers.get('User-Agent')
+
+    # Guardar usando la lógica importada
+    try:
+        registrar_acceso(programa, user_ip, user_agent)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        print(f"Error registrando acceso: {e}")
+        return jsonify({"status": "error", "message": "Error interno al guardar"}), 500

@@ -1,22 +1,30 @@
+import os
 from flask import Flask
+from dotenv import load_dotenv
 
-# Importar los Blueprints
+# Cargar variables de entorno
+load_dotenv()
+
+# Importar Blueprints existentes
 from routes.app_inicio import inicio_bp
 from routes.app_chatbot import chatbot_bp
 from routes.app_informacion import informacion_bp
 from routes.app_acercade import acercade_bp
 from routes.app_privacidad import privacidad_bp
+from routes.app_admin import admin_bp
 
-# Crear la instancia de la aplicación Flask
 app = Flask(__name__)
 
-# Registrar los Blueprints en la aplicación
+# Configuración de seguridad para sesiones
+app.secret_key = os.getenv("SECRET_KEY", "clave-por-defecto-insegura")
+
+# Registrar Blueprints
 app.register_blueprint(inicio_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(informacion_bp)
 app.register_blueprint(acercade_bp)
 app.register_blueprint(privacidad_bp)
+app.register_blueprint(admin_bp) 
 
-# Punto de entrada para ejecutar la aplicación
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5010, debug=True)

@@ -307,4 +307,16 @@ nav a.active { color: var(--primary-color); font-weight: 600; }
     
     /* Pero la columna facultad MANTIENE su centrado */
     .footer-col.faculty-col { align-items: center; }
+
+    .footer-col.brand-col {
+        align-items: center; /* Centra el logo y el bloque de texto */
+        text-align: center;  /* Centra el texto dentro del párrafo */
+        width: 100%;         /* Asegura que ocupe el ancho disponible */
+    }
+
+    .brand-col .footer-desc {
+        margin-left: auto;   /* Centra el bloque del párrafo */
+        margin-right: auto;
+    }
 }
+

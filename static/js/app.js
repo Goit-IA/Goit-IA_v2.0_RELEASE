@@ -1,20 +1,127 @@
 // --- static/js/app.js ---
 
+// VARIABLE GLOBAL PARA GUARDAR LA SELECCIÓN TEMPORALMENTE
+let selectedProgramTemp = "";
+
+// 1. FUNCIONES PARA EL FLUJO DE ACCESO (MODAL)
+
+// A) Paso 1 -> Paso 2: Guarda programa y muestra disclaimer
+window.goToDisclaimer = function(programName) {
+    console.log("Variando a paso 2. Programa:", programName);
+    selectedProgramTemp = programName;
+    
+    const step1 = document.getElementById('step-program-selection');
+    const step2 = document.getElementById('step-disclaimer');
+
+    if (step1 && step2) {
+        step1.style.display = 'none';
+        step2.style.display = 'block';
+    }
+};
+
+// B) Validar Checkbox: Habilita el botón de continuar
+window.toggleContinueButton = function() {
+    const checkbox = document.getElementById('terms-check');
+    const btn = document.getElementById('btn-continue-chat');
+    
+    if (checkbox && btn) {
+        if (checkbox.checked) {
+            btn.disabled = false;
+            btn.style.backgroundColor = '#007bff'; // Color activo
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.disabled = true;
+            btn.style.backgroundColor = '#ccc'; // Color deshabilitado
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+};
+
+// C) Finalizar: Llama a la lógica original de registro
+window.finalizeLogin = function() {
+    if (selectedProgramTemp) {
+        window.selectProgram(selectedProgramTemp);
+    } else {
+        alert("Por favor selecciona un programa primero.");
+    }
+};
+
+// 2. DEFINIR LA FUNCIÓN FINAL DE REGISTRO (GLOBAL)
+window.selectProgram = function(programa) {
+    console.log("🎓 Programa confirmado y registrando:", programa);
+
+    // A) Enviar datos al backend
+    fetch('/api/register_access', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            programa: programa,
+            timestamp: new Date().toISOString()
+        })
+    })
+    .then(response => response.json())
+    .then(data => console.log("Registro exitoso:", data))
+    .catch(err => console.error("Error registrando acceso:", err));
+
+    // B) Guardar fecha
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem('goit_access_date', today);
+
+    // C) Cerrar el modal con animación
+    const modal = document.getElementById('accessModal');
+    if (modal) {
+        modal.style.opacity = '0';
+        modal.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 500);
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. ELEMENTOS DEL DOM ---
+    // --- 3. LÓGICA DE INICIO (VISIBILIDAD DEL MODAL) ---
+    const accessModal = document.getElementById('accessModal');
+    
+    if (accessModal) {
+        // --- MODO PRUEBAS (ACTIVADO) ---
+        // Forzamos que el modal se muestre SIEMPRE.
+        console.log("🚧 Modo Pruebas: Mostrando modal de acceso obligatoriamente.");
+        accessModal.style.display = 'flex';
+        
+        // Aseguramos que se muestre el Paso 1 al recargar
+        const step1 = document.getElementById('step-program-selection');
+        const step2 = document.getElementById('step-disclaimer');
+        if(step1) step1.style.display = 'block';
+        if(step2) step2.style.display = 'none';
+
+        /* --- MODO PRODUCCIÓN (CÓDIGO COMENTADO) ---
+        const today = new Date().toISOString().split('T')[0];
+        const lastAccess = localStorage.getItem('goit_access_date');
+
+        if (lastAccess === today) {
+            accessModal.style.display = 'none';
+        } else {
+            accessModal.style.display = 'flex';
+        }
+        */
+    }
+
+    // --- 4. ELEMENTOS DEL CHAT ---
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input-field');
     const messagesContainer = document.getElementById('chat-messages-container');
     const loadingFace = document.getElementById('loading-face');
     const btnRegenerate = document.getElementById('btn-regenerate');
 
-    // Validación básica
+    // Validación básica por si estamos en otra página
     if (!chatForm || !messagesContainer) return;
 
-    // --- 2. FUNCIONES DE INTERFAZ ---
+    // --- 5. FUNCIONES DE INTERFAZ CHAT ---
 
-    // Agrega un mensaje visualmente al chat
     function addMessage(text, sender) {
         const div = document.createElement('div');
         div.classList.add('message', sender);
@@ -34,18 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // [MODIFICADO] Función de borrado más agresiva
     function removeLastBotMessage() {
-        // Obtenemos el último elemento físico dentro del contenedor de mensajes
         const lastElement = messagesContainer.lastElementChild;
 
-        // Verificamos: ¿Existe? ¿Tiene la clase 'bot'?
         if (lastElement && lastElement.classList.contains('bot')) {
-            // Lo eliminamos directamente del DOM
             lastElement.remove();
             console.log("✅ Último mensaje del bot eliminado correctamente.");
         } else {
-            // Si el último no es del bot (raro), buscamos en la lista completa
             const botMessages = messagesContainer.querySelectorAll('.message.bot');
             if (botMessages.length > 0) {
                 botMessages[botMessages.length - 1].remove();
@@ -54,24 +156,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. LÓGICA DE COMUNICACIÓN ---
+    // --- 6. LÓGICA DE COMUNICACIÓN (FETCH) ---
 
     async function sendMessage(message, mode = 'normal') {
         
-        // Si es regeneración, ocultamos botón y mostramos carga
+        // Estado de carga
         if (mode === 'regenerate') {
             if(btnRegenerate) btnRegenerate.style.display = 'none';
             if(loadingFace) loadingFace.style.display = 'block';
-        } 
-        // Si es normal
-        else {
+        } else {
             addMessage(message, 'user');
             chatInput.value = '';
             if(loadingFace) loadingFace.style.display = 'block';
             if(btnRegenerate) btnRegenerate.style.display = 'none';
         }
         
-        // Asegurar scroll
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
@@ -92,10 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 divError.textContent = "Error: " + data.error;
                 messagesContainer.appendChild(divError);
             } else {
-                // Agregar la NUEVA respuesta
                 addMessage(data.reply, 'bot');
-                
-                // Mostrar botón regenerar
                 if(btnRegenerate) btnRegenerate.style.display = 'inline-block';
             }
 
@@ -106,9 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 4. EVENTOS ---
+    // --- 7. EVENTOS DEL CHAT ---
 
-    // Enviar mensaje
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const message = chatInput.value.trim();
@@ -117,15 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Clic en Regenerar
     if (btnRegenerate) {
         btnRegenerate.addEventListener('click', () => {
             console.log("🔄 Botón regenerar presionado.");
-            
-            // 1. PRIMERO: Borramos la respuesta anterior
             removeLastBotMessage();
-
-            // 2. LUEGO: Pedimos la nueva
             sendMessage("", 'regenerate');
         });
     }

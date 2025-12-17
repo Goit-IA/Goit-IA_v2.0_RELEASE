@@ -15,7 +15,7 @@ load_dotenv()
 # --- CONFIGURACIÓN ---
 CHROMA_PATH = "data/chroma_db_web" 
 MODELO_EMBEDDING = "nomic-embed-text"
-MODELO_GROQ = "llama-3.3-70b-versatile"
+MODELO_GROQ = "openai/gpt-oss-120b"
 
 # Ahora obtenemos la Key desde el entorno de manera segura
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") 

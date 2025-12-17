@@ -24,7 +24,7 @@
 
     <div class="regenerate-container">
         <button id="btn-regenerate" class="regenerate-btn">
-            🔄 Regenerar última respuesta
+            🔄 Generar otra respuesta
         </button>
     </div>
     
@@ -34,5 +34,70 @@
     </form>
 </div>
 
+<div id="accessModal" class="access-overlay">
+    <div class="access-box">
+        
+        <div id="step-program-selection">
+            <div class="access-title">🎓 Bienvenido a Goit-IA</div>
+            <p class="access-desc">
+                Para iniciar el chat, por favor selecciona tu <strong>Programa Educativo</strong>.
+            </p>
+            
+            <div class="programs-grid">
+                <button class="program-btn" onclick="goToDisclaimer('Ingeniería de Software')">
+                    💻 Ing. Software
+                </button>
+                <button class="program-btn" onclick="goToDisclaimer('TI Organizaciones')">
+                    📡 Tecnologías (TI)
+                </button>
+                <button class="program-btn" onclick="goToDisclaimer('Administración')">
+                    📊 Administración
+                </button>
+                <button class="program-btn" onclick="goToDisclaimer('Contabilidad')">
+                    💰 Contabilidad
+                </button>
+                <button class="program-btn" onclick="goToDisclaimer('Gestión')">
+                    📋 Gestión
+                </button>
+                <button class="program-btn" onclick="goToDisclaimer('Ciencias Políticas')">
+                    ⚖️ Ciencias Políticas
+                </button>
+            </div>
+        </div>
+
+        <div id="step-disclaimer" style="display: none; text-align: left;">
+            <div class="access-title" style="font-size: 1.2rem; margin-bottom: 15px;">⚠️ Información Importante</div>
+            
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; color: #333;">
+                <p style="margin-bottom: 10px;">
+                    <strong>Nota sobre las respuestas:</strong><br>
+                    Si la respuesta generada no es correcta o no se adapta a lo que necesitas, por favor utiliza el botón:
+                </p>
+                <div style="text-align: center; margin: 10px 0;">
+                    <span style="background: #e2e6ea; padding: 5px 10px; border-radius: 4px; font-weight: bold;">🔄 Generar otra respuesta</span>
+                </div>
+                <p>Esto ayudará a Goit-IA a brindarte una respuesta más acertada.</p>
+            </div>
+
+            <div style="margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px;">
+                <input type="checkbox" id="terms-check" onchange="toggleContinueButton()">
+                <label for="terms-check" style="font-size: 0.9rem; cursor: pointer;">
+                    He leído y acepto los 
+                    <a href="{{ url_for('privacidad.privacidad') }}" target="_blank" style="color: #007bff; text-decoration: underline;">
+                        términos y condiciones
+                    </a> 
+                    vinculados al aviso de privacidad del sistema.
+                </label>
+            </div>
+
+            <button id="btn-continue-chat" class="program-btn" style="width: 100%; background-color: #ccc; cursor: not-allowed;" disabled onclick="finalizeLogin()">
+                Continuar al Chat
+            </button>
+        </div>
+
+    </div>
+</div>
+
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
 {% endblock %}
